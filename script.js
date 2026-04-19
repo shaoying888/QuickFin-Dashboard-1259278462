@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const ratio = Math.min((totalExp / monthlyIncome) * 100, 100);
         pieSegment.style.strokeDasharray = `${ratio}, 100`;
+        pieSegment.style.strokeDashoffset = '0';
         expenseRatio.innerText = `${Math.round(ratio)}%`;
         pieSegment.style.stroke = ratio > 80 ? '#ef4444' : '#3b82f6';
     }
@@ -106,19 +107,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const totalValue = transactions.reduce((a, b) => a + b.amount, 0);
         const container = document.getElementById('category-breakdown');
-        const pieChart = document.getElementById('analytics-pie');
+        const barChart = document.getElementById('analytics-pie');
         
         const colors = { Food: '#ef4444', Tech: '#3b82f6', Study: '#10b981', Travel: '#a855f7' };
         
-        // Render List & Pie
+        // Render Bar Chart
         let listHTML = '';
-        let pieHTML = `<path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />`;
-        let offset = 0;
+        let barHTML = '<div class="bar-chart-container">';
+        let maxAmount = Math.max(...Object.values(breakdown), 1);
 
         Object.entries(breakdown).forEach(([cat, amt]) => {
             const perc = totalValue > 0 ? (amt / totalValue * 100) : 0;
+            const barPerc = (amt / maxAmount) * 100;
             const color = colors[cat] || '#94a3b8';
             
+            // Category stat display
             listHTML += `
                 <div class="category-stat" style="border-left-color: ${color}">
                     <span>${cat} (${perc.toFixed(1)}%)</span>
@@ -126,20 +129,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            // Draw Segment
-            pieHTML += `
-                <path class="circle" 
-                    stroke="${color}"
-                    stroke-dasharray="${perc}, 100"
-                    stroke-dashoffset="-${offset}"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-                />
+            // Bar chart
+            barHTML += `
+                <div class="bar-row">
+                    <div class="bar-label">${cat}</div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: ${barPerc}%; background-color: ${color};"></div>
+                    </div>
+                    <div class="bar-value">${formatCurrency(amt)}</div>
+                </div>
             `;
-            offset += perc;
         });
 
+        barHTML += '</div>';
+        
         container.innerHTML = listHTML;
-        pieChart.innerHTML = pieHTML;
+        barChart.innerHTML = barHTML;
 
         const advice = document.getElementById('smart-advice');
         if (totalValue > monthlyIncome * 0.8) advice.innerText = "Warning: High burn rate detected! (80%+). Consider reducing non-essential costs.";
