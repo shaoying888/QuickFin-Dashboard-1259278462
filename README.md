@@ -15,8 +15,7 @@ Managing personal finances shouldn't be complicated. QuickFin provides a sleek, 
 - **Fully Responsive**: Beautiful experience on desktop, tablet, and mobile.
 
 ## Try Live
-[Link will be provided upon deployment to GitHub Pages]
-
+https://shaoying888.github.io/QuickFin-Dashboard-1259278462/
 ## How to Build/Run
 1. Clone the repository.
 2. Open `index.html` in any modern web browser.
