@@ -22,8 +22,9 @@ Managing personal finances shouldn't be complicated. QuickFin provides a sleek, 
 - **Local Storage**: All transactions saved in browser; no account needed
 
 ## 📸 Screenshots
-> **[将在此处添加项目截图]**  
-> 显示内容：Dashboard 总览、Analytics 分析页面、条形图示例、交易列表
+![QuickFin dashboard overview](screenshot.png)
+
+The screenshot shows the dashboard overview with balance cards, transaction tools, budget monitoring, and analytics-ready demo data.
 
 ## 🚀 How to Use
 
@@ -53,7 +54,7 @@ See [GitHub_Actions_验证指南.md](GitHub_Actions_验证指南.md) for:
 ├── style.css              # Glassmorphism design with animations (350+ lines)
 ├── README.md              # This file
 ├── .github/workflows/deploy.yml  # Automatic GitHub Pages deployment
-└── [Screenshot files]     # Project screenshots
+└── screenshot.png         # Project screenshot for README
 ```
 
 ## 🔧 Technology Stack
