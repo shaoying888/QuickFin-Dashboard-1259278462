@@ -3,7 +3,7 @@
 QuickFin is a modern, glass-morphism financial dashboard designed for personal wealth management. Track expenses, monitor budgets, analyze spending patterns, and make informed financial decisions with an intuitive, responsive interface.
 
 ## 🌐 Live Demo
-**📍 点击这里体验在线版本：** https://1259278462.github.io/QuickFin-Dashboard-1259278462/
+**📍 点击这里体验在线版本：** https://shaoying888.github.io/QuickFin-Dashboard-1259278462/
 
 > **使用说明**：打开链接后，点击左侧"Dashboard"标签页，点击"Load Demo"加载示例数据。然后点击"Analytics"标签页查看支出分析和条形图。无需账号，所有数据存储在浏览器本地。
 
@@ -29,12 +29,12 @@ The screenshot shows the dashboard overview with balance cards, transaction tool
 ## 🚀 How to Use
 
 ### Online (Recommended)
-Simply visit: https://1259278462.github.io/QuickFin-Dashboard-1259278462/
+Simply visit: https://shaoying888.github.io/QuickFin-Dashboard-1259278462/
 
 ### Local Development
 1. Clone the repository:
    ```bash
-   git clone https://github.com/1259278462/QuickFin-Dashboard-1259278462.git
+   git clone https://github.com/shaoying888/QuickFin-Dashboard-1259278462.git
    cd QuickFin-Dashboard-1259278462
    ```
 2. Open `index.html` in any modern web browser
