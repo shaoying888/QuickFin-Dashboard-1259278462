@@ -1,0 +1,12 @@
+作业要求/
+存在问题.txt
+
+# Local build outputs
+fsharp-src/bin/
+fsharp-src/obj/
+fsharp-src/build/
+fsharp-src/node_modules/
+
+# Local editor and OS files
+.DS_Store
+Thumbs.db

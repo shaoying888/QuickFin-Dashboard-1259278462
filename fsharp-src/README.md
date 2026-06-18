@@ -1,18 +1,28 @@
-# QuickFinCore F# Project
+# QuickFin WebSharper F# App
 
-This folder contains the F#/.NET 8 implementation of the core QuickFin dashboard logic.
+This folder contains the main QuickFin web application. It is not a separate backend or console helper: WebSharper compiles the authored F# UI and finance logic to browser JavaScript and emits a static site that can run on GitHub Pages.
 
-It models accounts, transactions, budgets, category analytics, monthly trends, and financial insights. The GitHub Pages UI in the repository root remains the live client-only demo, while this project documents and verifies the F# business logic behind the dashboard.
+## Files
+
+- `Domain.fs` defines accounts, transactions, budgets, summaries, trends, and insight generation.
+- `Client.fs` renders the interactive browser dashboard using WebSharper UI.
+- `Main.fs` wires the WebSharper HTML application and route.
+- `Main.html` provides the responsive page template and CSS.
+- `esbuild.config.mjs` bundles the generated WebSharper JavaScript into `build/Scripts/WebSharper/all.js`.
 
 ## Build
 
 ```bash
-dotnet build QuickFinCore.fsproj
+dotnet build QuickFinCore.fsproj -c Release
 ```
 
-## Run
+The build installs the local npm dependency, compiles F# with WebSharper, runs esbuild, and writes the deployable static site to `build/`.
+
+## Preview
 
 ```bash
-dotnet run --project QuickFinCore.fsproj
+cd build
+python -m http.server 8080
 ```
 
+Open `http://localhost:8080/`.

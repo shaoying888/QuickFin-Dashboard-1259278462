@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${Title}</title>
+    <meta name="description" content="QuickFin, a WebSharper F# personal finance dashboard." />
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #172033;
+            --muted: #667085;
+            --line: #d9e1ee;
+            --surface: #ffffff;
+            --panel: #f6f8fb;
+            --brand: #0f766e;
+            --brand-strong: #134e4a;
+            --accent: #be123c;
+            --gold: #a16207;
+            --shadow: 0 18px 60px rgba(23, 32, 51, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #eef3f7;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            border: 0;
+            cursor: pointer;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            background:
+                linear-gradient(135deg, rgba(15, 118, 110, 0.18), rgba(190, 18, 60, 0.08)),
+                #eef3f7;
+        }
+
+        .topbar {
+            border-bottom: 1px solid rgba(23, 32, 51, 0.12);
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(18px);
+        }
+
+        .topbar-inner {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            color: white;
+            background: linear-gradient(135deg, var(--brand), var(--accent));
+            font-weight: 800;
+            box-shadow: 0 10px 25px rgba(15, 118, 110, 0.24);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 0;
+        }
+
+        .brand p {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .badge {
+            border: 1px solid rgba(15, 118, 110, 0.26);
+            border-radius: 999px;
+            padding: 7px 10px;
+            color: var(--brand-strong);
+            background: rgba(240, 253, 250, 0.78);
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .layout {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 42px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.95fr);
+            gap: 20px;
+        }
+
+        .panel {
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.93);
+            box-shadow: var(--shadow);
+        }
+
+        .panel.pad {
+            padding: 20px;
+        }
+
+        .hero {
+            padding: 26px;
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .hero h2 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 4.1rem);
+            line-height: 0.95;
+            letter-spacing: 0;
+        }
+
+        .hero p {
+            max-width: 660px;
+            margin: 14px 0 0;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.55;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button {
+            min-height: 42px;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 800;
+            color: #fff;
+            background: var(--brand);
+        }
+
+        .button.secondary {
+            color: var(--ink);
+            background: #e8eef5;
+        }
+
+        .button.danger {
+            background: var(--accent);
+        }
+
+        .mini-board {
+            min-height: 230px;
+            border-radius: 8px;
+            overflow: hidden;
+            background:
+                linear-gradient(180deg, rgba(15, 118, 110, 0.1), rgba(190, 18, 60, 0.08)),
+                #f8fbfd;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .mini-board-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(23, 32, 51, 0.1);
+        }
+
+        .spark-bars {
+            height: 160px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 9px;
+            align-items: end;
+        }
+
+        .spark-bars span {
+            display: block;
+            border-radius: 6px 6px 0 0;
+            background: linear-gradient(180deg, var(--brand), var(--accent));
+            min-height: 26px;
+        }
+
+        .summary-grid {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .metric {
+            padding: 16px;
+        }
+
+        .metric small {
+            display: block;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 8px;
+            font-size: clamp(1.25rem, 3vw, 2rem);
+            letter-spacing: 0;
+        }
+
+        .metric span {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .grid-two {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 18px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-title h3 {
+            margin: 0;
+            font-size: 1rem;
+            letter-spacing: 0;
+        }
+
+        .section-title span {
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field.wide {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 9px 10px;
+            color: var(--ink);
+            background: #fff;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 3px solid rgba(15, 118, 110, 0.14);
+            border-color: var(--brand);
+        }
+
+        .transaction-list {
+            display: grid;
+            gap: 10px;
+            max-height: 390px;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .transaction {
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            background: var(--panel);
+        }
+
+        .transaction h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            letter-spacing: 0;
+        }
+
+        .transaction p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .amount {
+            text-align: right;
+            font-weight: 900;
+        }
+
+        .amount.income {
+            color: var(--brand);
+        }
+
+        .amount.expense {
+            color: var(--accent);
+        }
+
+        .link-button {
+            margin-top: 8px;
+            padding: 0;
+            color: var(--muted);
+            background: transparent;
+            font-weight: 800;
+            text-align: left;
+        }
+
+        .bars {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+
+        .bar-track {
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e4ebf2;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: var(--w);
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--brand), var(--accent));
+        }
+
+        .insight-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .insight {
+            border-left: 4px solid var(--brand);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--panel);
+        }
+
+        .insight.warning {
+            border-left-color: var(--accent);
+        }
+
+        .insight.neutral {
+            border-left-color: var(--gold);
+        }
+
+        .insight strong {
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .insight p {
+            margin: 5px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 10px;
+        }
+
+        .month-row {
+            display: grid;
+            grid-template-columns: 70px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            color: var(--brand-strong);
+            background: #ccfbf1;
+            font-size: 0.78rem;
+            font-weight: 900;
+        }
+
+        .status-pill.warning {
+            color: #7f1d1d;
+            background: #fee2e2;
+        }
+
+        .status-pill.watch {
+            color: #713f12;
+            background: #fef3c7;
+        }
+
+        @media (max-width: 980px) {
+            .layout,
+            .hero,
+            .grid-two {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 620px) {
+            .topbar-inner {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 14px 0;
+            }
+
+            .badge-row {
+                justify-content: flex-start;
+            }
+
+            .layout {
+                width: min(100% - 20px, 1180px);
+                padding-top: 18px;
+            }
+
+            .hero,
+            .panel.pad {
+                padding: 16px;
+            }
+
+            .summary-grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .month-row {
+                grid-template-columns: 58px 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div ws-replace="Body"></div>
+    <script ws-replace="scripts"></script>
+</body>
+</html>

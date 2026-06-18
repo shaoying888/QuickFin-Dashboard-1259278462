@@ -1,0 +1,12 @@
+{
+  "name": "quickfin-fsharp-web",
+  "version": "2.0.0",
+  "private": true,
+  "description": "QuickFin WebSharper F# single-page application",
+  "scripts": {
+    "build": "dotnet build QuickFinCore.fsproj"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}
