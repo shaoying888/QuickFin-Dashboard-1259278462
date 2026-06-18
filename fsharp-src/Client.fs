@@ -9,9 +9,6 @@ open WebSharper.UI.Notation
 
 [<JavaScript>]
 module Client =
-    let private categoryLabels =
-        Category.options |> List.map Category.displayName
-
     let private monthLabel month =
         match month with
         | 1 -> "Jan"
@@ -68,9 +65,6 @@ module Client =
     let private percentWidth value =
         value |> Money.clamp 0.0 100.0 |> Money.round2
 
-    let private textNode value =
-        text value
-
     let private metric label value caption =
         div [ attr.``class`` "metric panel" ] [
             small [] [ text label ]
@@ -89,6 +83,39 @@ module Client =
             label [] [ text labelText ]
             fieldDoc
         ]
+
+    let private codePill value =
+        span [ attr.``class`` "code-pill" ] [ text value ]
+
+    let private guideItem title body =
+        div [ attr.``class`` "guide-item" ] [
+            strong [] [ text title ]
+            p [] [ text body ]
+        ]
+
+    let private implementationItem title body files =
+        div [ attr.``class`` "implementation-item" ] [
+            div [] [
+                strong [] [ text title ]
+                p [] [ text body ]
+            ]
+            div [ attr.``class`` "code-row" ] [
+                for file in files do
+                    codePill file
+            ]
+        ]
+
+    let private workflowStep number title body =
+        div [ attr.``class`` "step-card" ] [
+            span [] [ text number ]
+            strong [] [ text title ]
+            p [] [ text body ]
+        ]
+
+    let private joinLines lines =
+        match lines with
+        | [] -> ""
+        | first :: rest -> rest |> List.fold (fun acc line -> acc + "\n" + line) first
 
     let private renderSummary model =
         let summary = FinanceEngine.summarize model
@@ -191,9 +218,14 @@ module Client =
             div [ attr.``class`` "hero panel" ] [
                 div [] [
                     span [ attr.``class`` (statusClass summary.Status) ] [ text (statusText summary.Status) ]
-                    h2 [] [ text "Plan spending before it plans you." ]
+                    h2 [] [ text "Plan smarter with a live finance dashboard." ]
                     p [] [
-                        text "QuickFin is now a WebSharper F# web application: transactions, budgets, charts, and insights are all modeled and rendered from F# running in the browser."
+                        text "QuickFin helps turn transactions into budget decisions with live totals, category breakdowns, monthly trends, and practical spending insights."
+                    ]
+                    div [ attr.``class`` "source-tags" ] [
+                        codePill "Live budget"
+                        codePill "Category insights"
+                        codePill "Static web app"
                     ]
                     div [ attr.``class`` "hero-actions" ] [
                         button [
@@ -210,7 +242,7 @@ module Client =
                 ]
                 div [ attr.``class`` "mini-board" ] [
                     div [ attr.``class`` "mini-board-head" ] [
-                        strong [] [ text "F# analytics" ]
+                        strong [] [ text "Savings outlook" ]
                         span [] [ text (Money.formatPercent summary.SavingsRate + " saved") ]
                     ]
                     div [ attr.``class`` "spark-bars" ] [
@@ -221,6 +253,60 @@ module Client =
                         span [ attr.style ("height:" + string (percentWidth summary.SavingsRate) + "%") ] []
                         span [ attr.style "height:72%" ] []
                     ]
+                ]
+            ]) state.View
+
+    let private workflowPanel () =
+        div [ attr.``class`` "workflow-steps" ] [
+            workflowStep "01" "Load a working month" "Start from demo transactions that cover income, housing, food, study, travel, and subscriptions."
+            workflowStep "02" "Change the plan" "Add transactions or edit budget targets and every chart updates from the same finance model."
+            workflowStep "03" "Read the result" "Review budget health, trend, category share, recurring expenses, and the generated finance summary."
+        ]
+
+    let private featureGuide () =
+        div [ attr.``class`` "panel pad" ] [
+            div [ attr.``class`` "section-title" ] [
+                h3 [] [ text "Feature guide" ]
+                span [] [ text "What to try" ]
+            ]
+            div [ attr.``class`` "guide-list" ] [
+                guideItem "Live planning" "Use the form to add a transaction and watch the balance, spending, savings, and category bars update immediately."
+                guideItem "Budget scenario testing" "Change income, expense limit, or savings goal to see whether the month becomes healthy, watch, or over budget."
+                guideItem "Readable insights" "The app turns raw transactions into plain-language notes about the biggest category, cash flow, and recurring spending."
+            ]
+        ]
+
+    let private fsharpEvidence () =
+        div [ attr.``class`` "panel pad" ] [
+            div [ attr.``class`` "section-title" ] [
+                h3 [] [ text "Implementation notes" ]
+                span [] [ text "Built with F#" ]
+            ]
+            div [ attr.``class`` "implementation-list" ] [
+                implementationItem
+                    "Typed finance model"
+                    "Accounts, transactions, budgets, categories, summaries, and insights are F# records and discriminated unions."
+                    [ "Domain.fs" ]
+                implementationItem
+                    "Browser UI"
+                    "The dashboard uses WebSharper UI, reactive Vars, BindView, and F# event handlers instead of a hand-written JavaScript app."
+                    [ "Client.fs" ]
+                implementationItem
+                    "Static web deployment"
+                    "The build compiles F# to JavaScript, bundles it with esbuild, and publishes the generated site to GitHub Pages."
+                    [ "Main.fs"; "wsconfig.json" ]
+            ]
+        ]
+
+    let private reportPanel (state: Var<DashboardModel>) =
+        Doc.BindView (fun model ->
+            div [ attr.``class`` "panel pad" ] [
+                div [ attr.``class`` "section-title" ] [
+                    h3 [] [ text "Generated summary" ]
+                    span [] [ text "Export view" ]
+                ]
+                pre [ attr.``class`` "report-box" ] [
+                    text (FinanceEngine.exportSummaryLines model |> joinLines)
                 ]
             ]) state.View
 
@@ -291,7 +377,7 @@ module Client =
         div [ attr.``class`` "panel pad" ] [
             div [ attr.``class`` "section-title" ] [
                 h3 [] [ text "Budget controls" ]
-                span [] [ text "F# recalculates all views" ]
+                span [] [ text "All views update together" ]
             ]
             div [ attr.``class`` "form-grid" ] [
                 field "Income target" (Doc.InputType.Text [ attr.placeholder "5000" ] incomeTarget)
@@ -337,7 +423,7 @@ module Client =
                     div [ attr.``class`` "panel pad" ] [
                         div [ attr.``class`` "section-title" ] [
                             h3 [] [ text "Smart insights" ]
-                            span [] [ text "Generated in F#" ]
+                            span [] [ text "Rule based" ]
                         ]
                         renderInsights model
                     ]
@@ -361,12 +447,12 @@ module Client =
                         div [ attr.``class`` "brand-mark" ] [ text "QF" ]
                         div [] [
                             h1 [] [ text "QuickFin" ]
-                            p [] [ text "WebSharper F# personal finance dashboard" ]
+                            p [] [ text "Personal finance planning dashboard" ]
                         ]
                     ]
                     div [ attr.``class`` "badge-row" ] [
-                        span [ attr.``class`` "badge" ] [ text "F# UI" ]
-                        span [ attr.``class`` "badge" ] [ text "WebSharper" ]
+                        span [ attr.``class`` "badge" ] [ text "Live analytics" ]
+                        span [ attr.``class`` "badge" ] [ text "Budget planner" ]
                         span [ attr.``class`` "badge" ] [ text "GitHub Pages ready" ]
                     ]
                 ]
@@ -374,12 +460,15 @@ module Client =
             div [ attr.``class`` "layout" ] [
                 div [] [
                     hero state
+                    workflowPanel()
                     analytics state
                 ]
-                div [] [
+                div [ attr.``class`` "side-stack" ] [
+                    featureGuide()
                     transactionForm state
-                    div [ attr.style "height:18px" ] []
                     budgetPanel state
+                    fsharpEvidence()
+                    reportPanel state
                 ]
             ]
         ]

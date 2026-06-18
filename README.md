@@ -1,6 +1,6 @@
-# QuickFin - WebSharper F# Finance Dashboard
+# QuickFin - Personal Finance Planning Dashboard
 
-QuickFin is a client-only personal finance web application built with F# and WebSharper. The browser UI, reactive state, transaction model, budget calculations, charts, and financial insights are authored in F# under `fsharp-src/` and compiled to JavaScript for GitHub Pages.
+QuickFin is a client-only personal finance web application for planning a monthly budget, reviewing expenses, and turning transaction history into useful spending insights. The app runs as a static site on GitHub Pages, with the application logic and browser UI authored in F# under `fsharp-src/` and compiled for the browser with WebSharper.
 
 ## Motivation
 
@@ -10,14 +10,17 @@ The project was rebuilt as a WebSharper F# web app so the submitted application 
 
 ## Features
 
-- Reactive F# dashboard state with `Var<DashboardModel>` and live recomputation.
+- Reactive dashboard state with live recomputation.
 - Transaction entry with date, account, kind, category, and amount.
 - Budget controls for income target, expense limit, and savings goal.
 - Summary cards for balance, income, expenses, savings, savings rate, and budget usage.
 - Category distribution bars generated from expense data.
 - Monthly savings trend calculated from transaction history.
 - Smart insights for budget health, savings rate, largest category, largest expense, and recurring expenses.
+- In-app feature guide, implementation notes, and generated finance summary for reviewers.
 - Responsive WebSharper UI compiled to a static site for GitHub Pages.
+
+For a reviewer-friendly walkthrough of the main flows and F# implementation, see [`FEATURES.md`](FEATURES.md).
 
 ## Try Live
 
@@ -66,17 +69,17 @@ http://localhost:8080/
 | `fsharp-src/Main.html` | HTML/CSS template used by WebSharper |
 | `fsharp-src/esbuild.config.mjs` | Bundles WebSharper output into the static `all.js` used by GitHub Pages |
 
-## Requirement Coverage
+## Implementation Notes
 
-| Requirement | Evidence |
-|---|---|
-| Public repository | GitHub repository under `shaoying888/QuickFin-Dashboard-1259278462` |
-| Web application | WebSharper F# static web app in `fsharp-src/` |
-| F# implementation | `Domain.fs`, `Client.fs`, and `Main.fs` contain the authored F# application logic and UI |
-| Online demo | GitHub Pages link in the Try Live section |
-| Automatic deployment | `.github/workflows/deploy.yml` builds the F# WebSharper app and deploys `fsharp-src/build` |
-| README | Project motivation, features, build/run instructions, screenshot, and live link are documented here |
-| Screenshot | Included below as `screenshot.png` |
+QuickFin is delivered as a static web application, but it is not a hand-written JavaScript frontend. WebSharper compiles the F# modules into browser JavaScript, and the generated bundle is what runs on GitHub Pages.
+
+The clearest files to review are:
+
+- `Domain.fs`, for the typed data model and finance calculations.
+- `Client.fs`, for the browser UI, reactive state, forms, charts, and event handlers.
+- `Main.fs`, for the WebSharper application entry point.
+
+The GitHub Actions workflow builds the F# project in Release mode and deploys the generated `fsharp-src/build/` directory.
 
 ## Screenshot
 
