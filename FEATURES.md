@@ -19,6 +19,8 @@ The application focuses on four practical questions:
 
 The `Load demo` action restores a sample data set with accounts, income, rent, groceries, travel, study expenses, health, entertainment, and subscription spending. This gives the reviewer a complete state to inspect without entering data first.
 
+When the page opens for the first time, a short guide explains the same path and offers a one-click start into the demo data. The guide can be reopened from the top bar.
+
 ### 2. Add a transaction
 
 Use the `Add transaction` panel to enter a description, amount, date, transaction kind, category, and account. After pressing `Add transaction`, the dashboard updates the balance, totals, budget status, charts, insights, and ledger without a page reload.

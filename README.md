@@ -11,6 +11,7 @@ The project was rebuilt as a WebSharper F# web app so the submitted application 
 ## Features
 
 - Reactive dashboard state with live recomputation.
+- First-use guide that points reviewers to the demo data and the main review path.
 - Transaction entry with date, account, kind, category, and amount.
 - Budget controls for income target, expense limit, and savings goal.
 - Summary cards for balance, income, expenses, savings, savings rate, and budget usage.

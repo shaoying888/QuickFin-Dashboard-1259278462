@@ -2,6 +2,7 @@ namespace QuickFinCore
 
 open System
 open WebSharper
+open WebSharper.JavaScript
 open WebSharper.UI
 open WebSharper.UI.Client
 open WebSharper.UI.Html
@@ -9,6 +10,28 @@ open WebSharper.UI.Notation
 
 [<JavaScript>]
 module Client =
+    let private onboardingStorageKey = "quickfin.onboarding.seen"
+
+    let private onboardingSeen () =
+        JS.Inline<bool>(
+            """
+            try {
+                return window.localStorage.getItem($0) === "1";
+            } catch (e) {
+                return false;
+            }
+            """,
+            onboardingStorageKey)
+
+    let private markOnboardingSeen () =
+        JS.Inline<unit>(
+            """
+            try {
+                window.localStorage.setItem($0, "1");
+            } catch (e) {}
+            """,
+            onboardingStorageKey)
+
     let private monthLabel month =
         match month with
         | 1 -> "Jan"
@@ -110,6 +133,22 @@ module Client =
             span [] [ text number ]
             strong [] [ text title ]
             p [] [ text body ]
+        ]
+
+    let private onboardingStep label title body =
+        div [ attr.``class`` "onboarding-step" ] [
+            span [] [ text label ]
+            div [] [
+                strong [] [ text title ]
+                p [] [ text body ]
+            ]
+        ]
+
+    let private demoFact label value caption =
+        div [ attr.``class`` "demo-fact" ] [
+            span [] [ text label ]
+            strong [] [ text value ]
+            p [] [ text caption ]
         ]
 
     let private joinLines lines =
@@ -255,6 +294,59 @@ module Client =
                     ]
                 ]
             ]) state.View
+
+    let private onboardingGuide (state: Var<DashboardModel>) (isOpen: Var<bool>) =
+        Doc.BindView (fun visible ->
+            if visible then
+                div [ attr.``class`` "onboarding-overlay" ] [
+                    div [ attr.``class`` "onboarding-card panel" ] [
+                        div [ attr.``class`` "onboarding-head" ] [
+                            div [] [
+                                span [ attr.``class`` "status-pill" ] [ text "First use guide" ]
+                                h2 [] [ text "Start with a complete finance month." ]
+                                p [] [ text "Load the sample data, make one change, and watch every panel update from the same dashboard state." ]
+                            ]
+                            button [
+                                attr.``class`` "close-button"
+                                attr.title "Close guide"
+                                on.click (fun _ _ -> isOpen := false)
+                            ] [ text "Close" ]
+                        ]
+                        div [ attr.``class`` "onboarding-body" ] [
+                            div [ attr.``class`` "onboarding-path" ] [
+                                onboardingStep "1" "Load the demo" "Use the sample income, rent, groceries, study, travel, and subscription records as a ready review month."
+                                onboardingStep "2" "Try one edit" "Add a transaction or change the expense limit. The cards, charts, insights, ledger, and summary move together."
+                                onboardingStep "3" "Read the explanation" "Open the implementation notes when you want to connect the visible behavior with the source files."
+                            ]
+                            div [ attr.``class`` "demo-panel" ] [
+                                strong [] [ text "Demo preview" ]
+                                p [] [ text "The sample month is intentionally varied so the charts and insights have something meaningful to show." ]
+                                div [ attr.``class`` "demo-facts" ] [
+                                    demoFact "Income" "$5,050" "June salary sample"
+                                    demoFact "Budget" "$3,200" "Expense limit"
+                                    demoFact "Records" "17" "Transactions across categories"
+                                ]
+                            ]
+                        ]
+                        div [ attr.``class`` "onboarding-actions" ] [
+                            button [
+                                attr.``class`` "button"
+                                on.click (fun _ _ ->
+                                    markOnboardingSeen()
+                                    state := FinanceEngine.demoModel
+                                    isOpen := false)
+                            ] [ text "Start with demo" ]
+                            button [
+                                attr.``class`` "button secondary"
+                                on.click (fun _ _ ->
+                                    markOnboardingSeen()
+                                    isOpen := false)
+                            ] [ text "Explore dashboard" ]
+                        ]
+                    ]
+                ]
+            else
+                text "") isOpen.View
 
     let private workflowPanel () =
         div [ attr.``class`` "workflow-steps" ] [
@@ -439,6 +531,7 @@ module Client =
 
     let Main () =
         let state = Var.Create FinanceEngine.demoModel
+        let showOnboarding = Var.Create (not (onboardingSeen()))
 
         div [ attr.``class`` "app-shell" ] [
             header [ attr.``class`` "topbar" ] [
@@ -450,13 +543,21 @@ module Client =
                             p [] [ text "Personal finance planning dashboard" ]
                         ]
                     ]
-                    div [ attr.``class`` "badge-row" ] [
-                        span [ attr.``class`` "badge" ] [ text "Live analytics" ]
-                        span [ attr.``class`` "badge" ] [ text "Budget planner" ]
-                        span [ attr.``class`` "badge" ] [ text "GitHub Pages ready" ]
+                    div [ attr.``class`` "topbar-actions" ] [
+                        div [ attr.``class`` "badge-row" ] [
+                            span [ attr.``class`` "badge" ] [ text "Live analytics" ]
+                            span [ attr.``class`` "badge" ] [ text "Budget planner" ]
+                            span [ attr.``class`` "badge" ] [ text "GitHub Pages ready" ]
+                        ]
+                        button [
+                            attr.``class`` "guide-button"
+                            attr.title "Open first use guide"
+                            on.click (fun _ _ -> showOnboarding := true)
+                        ] [ text "Guide" ]
                     ]
                 ]
             ]
+            onboardingGuide state showOnboarding
             div [ attr.``class`` "layout" ] [
                 div [] [
                     hero state

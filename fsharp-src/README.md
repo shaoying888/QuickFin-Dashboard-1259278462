@@ -26,3 +26,5 @@ python -m http.server 8080
 ```
 
 Open `http://localhost:8080/`.
+
+On first load, a short onboarding panel points reviewers to the demo data and the main review flow.
