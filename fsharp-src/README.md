@@ -1,14 +1,13 @@
 # QuickFin WebSharper F# App
 
-This folder contains the main QuickFin web application. It is not a separate backend or console helper: WebSharper compiles the authored F# UI and finance logic to browser JavaScript and emits a static site that can run on GitHub Pages.
+This folder contains the main QuickFin web application. WebSharper compiles the authored F# UI and finance logic to browser JavaScript, so the app runs as a static site on GitHub Pages.
 
 ## Files
 
-- `Domain.fs` defines accounts, transactions, budgets, summaries, trends, and insight generation.
-- `Client.fs` renders the interactive browser dashboard using WebSharper UI.
-- `Main.fs` wires the WebSharper HTML application and route.
-- `Main.html` provides the responsive page template and CSS.
-- `esbuild.config.mjs` bundles the generated WebSharper JavaScript into `build/Scripts/WebSharper/all.js`.
+- `Domain.fs` defines the typed model, demo data, finance calculations, review ranges, forecasts, scenario simulation, and goal planning.
+- `Client.fs` renders the dashboard UI, interactive panels, filters, presets, and forms.
+- `Main.fs` wires the WebSharper site entry point.
+- `Main.html` provides the responsive template and CSS.
 
 ## Build
 
@@ -16,7 +15,7 @@ This folder contains the main QuickFin web application. It is not a separate bac
 dotnet build QuickFinCore.fsproj -c Release
 ```
 
-The build installs the local npm dependency, compiles F# with WebSharper, runs esbuild, and writes the deployable static site to `build/`.
+The build compiles F#, runs WebSharper, bundles the generated JavaScript, and writes the deployable site to `build/`.
 
 ## Preview
 
@@ -27,4 +26,11 @@ python -m http.server 8080
 
 Open `http://localhost:8080/`.
 
-On first load, a short onboarding panel points reviewers to the demo data and the main review flow.
+## What To Look For
+
+- Demo loading and onboarding.
+- Review-range switching.
+- Search and filtering in the ledger.
+- Account overview and category mix.
+- Forecast, recurring spend, scenario simulation, and savings target panels.
+- Generated summary output.

@@ -97,6 +97,71 @@ type DashboardModel =
       Budget: Budget }
 
 [<JavaScript>]
+type ReviewRange =
+    | CurrentMonth
+    | Last3Months
+    | AllTime
+
+[<JavaScript>]
+module ReviewRange =
+    let displayName reviewRange =
+        match reviewRange with
+        | CurrentMonth -> "Current month"
+        | Last3Months -> "Last 3 months"
+        | AllTime -> "All time"
+
+    let options =
+        [ CurrentMonth; Last3Months; AllTime ]
+
+[<JavaScript>]
+type ForecastSnapshot =
+    { NetFlow: float
+      RunwayMonths: float
+      ProjectedSavings: float
+      ProjectedBalance: float
+      RecurringBaseline: float }
+
+[<JavaScript>]
+type SpendingSlice =
+    { Label: string
+      Amount: float
+      Share: float }
+
+[<JavaScript>]
+type AccountSnapshot =
+    { AccountName: string
+      OpeningBalance: float
+      Balance: float
+      RangeIncome: float
+      RangeExpenses: float
+      RangeNetFlow: float
+      TransactionCount: int
+      Share: float }
+
+[<JavaScript>]
+type ScenarioSnapshot =
+    { Income: float
+      Expenses: float
+      Savings: float
+      BudgetUsed: float
+      Status: BudgetStatus
+      ProjectedBalance: float
+      DeltaIncome: float
+      DeltaExpenses: float
+      DeltaSavings: float }
+
+[<JavaScript>]
+type GoalPlan =
+    { TargetAmount: float
+      CurrentAmount: float
+      RemainingAmount: float
+      Progress: float
+      HorizonMonths: int
+      RequiredMonthlyContribution: float
+      AverageMonthlySavings: float
+      Feasible: bool }
+
+[<JavaScript>]
 module Category =
     let displayName category =
         match category with
@@ -121,6 +186,7 @@ module Category =
           Entertainment
           Utilities
           Subscriptions
+          Other "Income"
           Other "Other" ]
 
     let fromName (value: string) =
@@ -134,6 +200,7 @@ module Category =
         | "entertainment" -> Entertainment
         | "utilities" -> Utilities
         | "subscriptions" -> Subscriptions
+        | "income" -> Other "Income"
         | "" -> Other "Uncategorized"
         | other -> Other other
 
@@ -181,7 +248,7 @@ module Transaction =
     let monthKey transaction =
         transaction.PostedOn.Year, transaction.PostedOn.Month
 
-    let normalize transaction =
+    let normalize (transaction: Transaction) : Transaction =
         { transaction with Amount = Money.round2 transaction.Amount }
 
 [<JavaScript>]
@@ -192,7 +259,12 @@ module FinanceEngine =
     let private incomeAmount transaction =
         if Transaction.isIncome transaction && transaction.Kind <> Expense then abs transaction.Amount else 0.0
 
-    let normalize model =
+    let private budgetStatusFromUsed used =
+        if used >= 100.0 then OverBudget
+        elif used >= 80.0 then Watch
+        else Healthy
+
+    let normalize (model: DashboardModel) : DashboardModel =
         { model with Transactions = model.Transactions |> List.map Transaction.normalize }
 
     let totalOpeningBalance model =
@@ -229,21 +301,22 @@ module FinanceEngine =
 
     let budgetStatus budget transactions =
         let used = budgetUsed budget transactions
-        if used >= 100.0 then OverBudget
-        elif used >= 80.0 then Watch
-        else Healthy
+        budgetStatusFromUsed used
 
-    let summarize model =
-        let normalized = normalize model
-        let income = totalIncome normalized.Transactions
-        let expenses = totalExpenses normalized.Transactions
-        { Balance = currentBalance normalized
+    let summarizeForTransactions (model: DashboardModel) (transactions: Transaction list) =
+        let income = totalIncome transactions
+        let expenses = totalExpenses transactions
+        { Balance = currentBalance model
           Income = income
           Expenses = expenses
           Savings = income - expenses |> Money.round2
-          SavingsRate = savingsRate normalized.Transactions
-          BudgetUsed = budgetUsed normalized.Budget normalized.Transactions
-          Status = budgetStatus normalized.Budget normalized.Transactions }
+          SavingsRate = savingsRate transactions
+          BudgetUsed = budgetUsed model.Budget transactions
+          Status = budgetStatus model.Budget transactions }
+
+    let summarize (model: DashboardModel) =
+        let normalized = normalize model
+        summarizeForTransactions normalized normalized.Transactions
 
     let categoryBreakdown transactions =
         let expenseTransactions =
@@ -275,17 +348,143 @@ module FinanceEngine =
               Savings = income - expense |> Money.round2 })
         |> List.sortBy (fun point -> point.Year, point.Month)
 
-    let highSpendingCategories threshold transactions =
+    let averageMonthlySavings transactions =
+        let points = monthlyTrend transactions
+        if points.IsEmpty then 0.0
+        else points |> List.averageBy _.Savings |> Money.round2
+
+    let accountSnapshots (reviewTransactions: Transaction list) (model: DashboardModel) =
+        let normalized = normalize model
+        let allTransactionsByAccount =
+            normalized.Transactions
+            |> List.groupBy (fun t -> t.Account)
+            |> Map.ofList
+
+        let rangeTransactionsByAccount =
+            reviewTransactions
+            |> List.groupBy (fun t -> t.Account)
+            |> Map.ofList
+
+        let accountNames =
+            [ yield! normalized.Accounts |> List.map _.Name
+              yield! normalized.Transactions |> List.map _.Account ]
+            |> List.distinct
+            |> List.sort
+
+        let snapshots =
+            accountNames
+            |> List.map (fun accountName ->
+                let openingBalance =
+                    normalized.Accounts
+                    |> List.tryFind (fun account -> account.Name = accountName)
+                    |> Option.map _.OpeningBalance
+                    |> Option.defaultValue 0.0
+
+                let allItems = Map.tryFind accountName allTransactionsByAccount |> Option.defaultValue []
+                let rangeItems = Map.tryFind accountName rangeTransactionsByAccount |> Option.defaultValue []
+                let balance = Money.round2 (openingBalance + (allItems |> List.sumBy Transaction.signedAmount))
+                let rangeIncome = totalIncome rangeItems
+                let rangeExpenses = totalExpenses rangeItems
+                let rangeNetFlow = Money.round2 (rangeIncome - rangeExpenses)
+
+                { AccountName = accountName
+                  OpeningBalance = openingBalance
+                  Balance = balance
+                  RangeIncome = rangeIncome
+                  RangeExpenses = rangeExpenses
+                  RangeNetFlow = rangeNetFlow
+                  TransactionCount = rangeItems.Length
+                  Share = 0.0 })
+
+        let totalBalance =
+            snapshots
+            |> List.sumBy _.Balance
+            |> Money.round2
+
+        snapshots
+        |> List.map (fun snapshot ->
+            { snapshot with
+                Share =
+                    if totalBalance <= 0.0 then 0.0
+                    else Money.percent snapshot.Balance totalBalance })
+        |> List.sortByDescending _.Balance
+
+    let rec transactionsForRange reviewRange (model: DashboardModel) =
+        let normalized = normalize model
+        let currentYear = normalized.Budget.Year
+        let currentMonth = normalized.Budget.Month
+
+        match reviewRange with
+        | CurrentMonth ->
+            normalized.Transactions
+            |> List.filter (fun t -> t.PostedOn.Year = currentYear && t.PostedOn.Month = currentMonth)
+        | Last3Months ->
+            normalized.Transactions
+            |> List.filter (fun t ->
+                let monthIndex = t.PostedOn.Year * 12 + t.PostedOn.Month
+                let currentIndex = currentYear * 12 + currentMonth
+                monthIndex >= currentIndex - 2 && monthIndex <= currentIndex)
+        | AllTime ->
+            normalized.Transactions
+
+    and spendingSlices (transactions: Transaction list) =
+        let items =
+            transactions
+            |> categoryBreakdown
+            |> List.sortByDescending _.Total
+
+        let top = items |> List.truncate 4
+        let restTotal = items |> List.skip 4 |> List.sumBy _.Total |> Money.round2
+        let total = totalExpenses transactions
+
+        let slices =
+            top
+            |> List.map (fun item ->
+                { Label = item.CategoryName
+                  Amount = item.Total
+                  Share = if total = 0.0 then 0.0 else Money.percent item.Total total })
+
+        if restTotal > 0.0 then
+            slices
+            @ [ { Label = "Other"
+                  Amount = restTotal
+                  Share = if total = 0.0 then 0.0 else Money.percent restTotal total } ]
+        else
+            slices
+
+    and summarizeForRange reviewRange (model: DashboardModel) =
+        let normalized = normalize model
+        let transactions = transactionsForRange reviewRange normalized
+        summarizeForTransactions normalized transactions
+
+    and projectedSnapshot reviewRange (model: DashboardModel) =
+        let normalized = normalize model
+        let transactions = transactionsForRange reviewRange normalized
+        let summary = summarizeForTransactions normalized transactions
+        let netFlow = Money.round2 (summary.Income - summary.Expenses)
+        let runwayMonths =
+            if summary.Expenses = 0.0 then 0.0
+            else Money.round2 (summary.Balance / summary.Expenses)
+        let recurringBaseline = predictableMonthlyCosts normalized.Transactions
+        let projectedBalance = Money.round2 (summary.Balance + netFlow)
+
+        { NetFlow = netFlow
+          RunwayMonths = runwayMonths
+          ProjectedSavings = summary.Savings
+          ProjectedBalance = projectedBalance
+          RecurringBaseline = recurringBaseline }
+
+    and highSpendingCategories threshold transactions =
         categoryBreakdown transactions
         |> List.filter (fun item -> item.Share >= threshold)
 
-    let findLargestExpense transactions =
+    and findLargestExpense transactions =
         transactions
         |> List.filter Transaction.isExpense
         |> List.sortByDescending (fun t -> abs t.Amount)
         |> List.tryHead
 
-    let averageExpense transactions =
+    and averageExpense transactions =
         let expenses =
             transactions
             |> List.filter Transaction.isExpense
@@ -294,7 +493,7 @@ module FinanceEngine =
         if expenses.IsEmpty then 0.0
         else expenses |> List.average |> Money.round2
 
-    let recurringCandidates transactions =
+    and recurringCandidates transactions =
         transactions
         |> List.filter Transaction.isExpense
         |> List.groupBy (fun t -> t.Description.Trim().ToLower(), Category.displayName t.Category)
@@ -304,6 +503,54 @@ module FinanceEngine =
                 Some(description, category, average, items.Length)
             else None)
         |> List.sortByDescending (fun (_, _, average, count) -> average * float count)
+
+    and predictableMonthlyCosts (transactions: Transaction list) =
+        recurringCandidates transactions
+        |> List.truncate 3
+        |> List.sumBy (fun (_, _, average, count) -> average * float count)
+        |> Money.round2
+
+    and monthComparison (current: MonthlyPoint) (previous: MonthlyPoint) =
+        let incomeDelta = Money.round2 (current.Income - previous.Income)
+        let expenseDelta = Money.round2 (current.Expense - previous.Expense)
+        let savingsDelta = Money.round2 (current.Savings - previous.Savings)
+        incomeDelta, expenseDelta, savingsDelta
+
+    let simulateScenario (budget: Budget) (summary: DashboardSummary) extraIncome expenseCut extraCost =
+        let income = Money.round2 (summary.Income + extraIncome)
+        let expenses = Money.round2 (max 0.0 (summary.Expenses - expenseCut) + extraCost)
+        let savings = Money.round2 (income - expenses)
+        let budgetUsed = Money.percent expenses budget.ExpenseLimit |> Money.clamp 0.0 999.0
+        let status = budgetStatusFromUsed budgetUsed
+        let projectedBalance = Money.round2 (summary.Balance + (savings - summary.Savings))
+
+        { Income = income
+          Expenses = expenses
+          Savings = savings
+          BudgetUsed = budgetUsed
+          Status = status
+          ProjectedBalance = projectedBalance
+          DeltaIncome = Money.round2 (income - summary.Income)
+          DeltaExpenses = Money.round2 (expenses - summary.Expenses)
+          DeltaSavings = Money.round2 (savings - summary.Savings) }
+
+    let savingsPlan horizonMonths targetAmount averageMonthlySavings (summary: DashboardSummary) =
+        let current = summary.Savings
+        let remaining = Money.round2 (max 0.0 (targetAmount - current))
+        let months = max 1 horizonMonths
+        let requiredMonthlyContribution = Money.round2 (remaining / float months)
+        let progress =
+            if targetAmount <= 0.0 then 0.0
+            else Money.percent (Money.clamp 0.0 targetAmount current) targetAmount
+
+        { TargetAmount = targetAmount
+          CurrentAmount = current
+          RemainingAmount = remaining
+          Progress = progress
+          HorizonMonths = months
+          RequiredMonthlyContribution = requiredMonthlyContribution
+          AverageMonthlySavings = averageMonthlySavings
+          Feasible = averageMonthlySavings >= requiredMonthlyContribution }
 
     let generateInsights model =
         let summary = summarize model
@@ -386,6 +633,8 @@ module FinanceEngine =
     let exportSummaryLines model =
         let summary = summarize model
         let categories = categoryBreakdown model.Transactions
+        let accounts = accountSnapshots model.Transactions model
+        let averageSavings = averageMonthlySavings model.Transactions
         let status =
             match summary.Status with
             | Healthy -> "Healthy"
@@ -398,8 +647,13 @@ module FinanceEngine =
           "Savings: " + Money.format summary.Savings
           "Savings rate: " + Money.formatPercent summary.SavingsRate
           "Budget used: " + Money.formatPercent summary.BudgetUsed
+          "Average monthly savings: " + Money.format averageSavings
           "Status: " + status ]
         @ (categories |> List.map (fun c -> c.CategoryName + ": " + Money.format c.Total + " (" + Money.formatPercent c.Share + ")"))
+        @ (if accounts.IsEmpty then []
+           else
+               "Accounts:"
+               :: (accounts |> List.map (fun account -> account.AccountName + ": " + Money.format account.Balance + " (" + string account.TransactionCount + " tx)")))
 
     let demoModel =
         let date (y: int) (m: int) (d: int) = DateTime(y, m, d)
@@ -407,7 +661,7 @@ module FinanceEngine =
             [ { Name = "Checking"; OpeningBalance = 2400.0; Currency = "USD" }
               { Name = "Savings"; OpeningBalance = 1800.0; Currency = "USD" } ]
           Budget =
-            { Month = 5
+            { Month = 6
               Year = 2026
               IncomeTarget = 5000.0
               ExpenseLimit = 3200.0
@@ -429,4 +683,8 @@ module FinanceEngine =
               { Id = 14; PostedOn = date 2026 6 1; Description = "Salary"; Amount = 5050.0; Kind = Income; Category = Other "Income"; Account = "Checking"; Note = None }
               { Id = 15; PostedOn = date 2026 6 2; Description = "Rent"; Amount = 1100.0; Kind = Expense; Category = Housing; Account = "Checking"; Note = None }
               { Id = 16; PostedOn = date 2026 6 4; Description = "Groceries"; Amount = 127.44; Kind = Expense; Category = Food; Account = "Checking"; Note = None }
-              { Id = 17; PostedOn = date 2026 6 5; Description = "Concert"; Amount = 92.0; Kind = Expense; Category = Entertainment; Account = "Checking"; Note = None } ] }
+              { Id = 17; PostedOn = date 2026 6 5; Description = "Concert"; Amount = 92.0; Kind = Expense; Category = Entertainment; Account = "Checking"; Note = None }
+              { Id = 18; PostedOn = date 2026 6 7; Description = "Train ticket"; Amount = 45.0; Kind = Expense; Category = Travel; Account = "Checking"; Note = Some "Weekend transit" }
+              { Id = 19; PostedOn = date 2026 6 9; Description = "Groceries"; Amount = 138.2; Kind = Expense; Category = Food; Account = "Checking"; Note = Some "Bulk refill" }
+              { Id = 20; PostedOn = date 2026 6 11; Description = "Cloud tools"; Amount = 19.0; Kind = Expense; Category = Subscriptions; Account = "Checking"; Note = Some "Monthly software" }
+              { Id = 21; PostedOn = date 2026 6 14; Description = "Gym"; Amount = 35.0; Kind = Expense; Category = Health; Account = "Checking"; Note = Some "Membership" } ] }

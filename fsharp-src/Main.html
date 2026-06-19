@@ -30,7 +30,7 @@
             min-width: 320px;
             color: var(--ink);
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #eef3f7;
+            background: #e9eff5;
         }
 
         button,
@@ -45,22 +45,25 @@
         }
 
         .app-shell {
-            min-height: 100vh;
+            min-height: 100dvh;
             background:
                 linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(190, 18, 60, 0.06)),
-                #eef3f7;
+                #e9eff5;
         }
 
         .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
             border-bottom: 1px solid rgba(23, 32, 51, 0.12);
             background: rgba(255, 255, 255, 0.86);
             backdrop-filter: blur(18px);
         }
 
         .topbar-inner {
-            width: min(1180px, calc(100% - 32px));
+            width: min(1240px, calc(100% - 24px));
             margin: 0 auto;
-            min-height: 72px;
+            min-height: 76px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -139,12 +142,12 @@
         }
 
         .layout {
-            width: min(1180px, calc(100% - 32px));
+            width: min(1240px, calc(100% - 24px));
             margin: 0 auto;
-            padding: 28px 0 42px;
+            padding: 24px 0 42px;
             display: grid;
-            grid-template-columns: minmax(0, 1.75fr) minmax(330px, 0.95fr);
-            gap: 20px;
+            grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.92fr);
+            gap: 18px;
         }
 
         .onboarding-overlay {
@@ -408,28 +411,107 @@
             grid-template-rows: auto 1fr;
         }
 
-        .mini-board-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            border-bottom: 1px solid rgba(23, 32, 51, 0.1);
-        }
-
-        .spark-bars {
-            height: 160px;
-            padding: 16px;
+        .mini-column {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 9px;
-            align-items: end;
+            gap: 12px;
         }
 
-        .spark-bars span {
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 8px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.94);
+        }
+
+        .stat-card span {
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .stat-card strong {
             display: block;
-            border-radius: 6px 6px 0 0;
-            background: linear-gradient(180deg, var(--brand), var(--accent));
-            min-height: 26px;
+            margin-top: 6px;
+            font-size: 1.18rem;
+        }
+
+        .stat-card p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .page-intro {
+            display: grid;
+            gap: 12px;
+        }
+
+        .intro-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .intro-grid strong {
+            display: block;
+            font-size: 0.92rem;
+        }
+
+        .intro-grid p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
+        .account-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .account-card {
+            display: grid;
+            gap: 12px;
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 8px;
+            padding: 14px;
+            background: var(--panel);
+        }
+
+        .account-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .account-head strong {
+            display: block;
+            font-size: 0.94rem;
+        }
+
+        .account-head p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .account-mini-grid,
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .scenario-row {
+            margin-top: 2px;
         }
 
         .workflow-steps {
@@ -473,10 +555,34 @@
             line-height: 1.45;
         }
 
+        .mini-board-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid rgba(23, 32, 51, 0.1);
+        }
+
+        .spark-bars {
+            height: 160px;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 9px;
+            align-items: end;
+        }
+
+        .spark-bars span {
+            display: block;
+            border-radius: 6px 6px 0 0;
+            background: linear-gradient(180deg, var(--brand), var(--accent));
+            min-height: 26px;
+        }
+
         .summary-grid {
             margin-top: 18px;
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 12px;
         }
 
@@ -622,7 +728,7 @@
         .transaction-list {
             display: grid;
             gap: 10px;
-            max-height: 390px;
+            max-height: 450px;
             overflow: auto;
             padding-right: 4px;
         }
@@ -738,7 +844,7 @@
 
         .month-row {
             display: grid;
-            grid-template-columns: 70px 1fr auto;
+            grid-template-columns: 92px 1fr auto;
             align-items: center;
             gap: 10px;
             color: var(--muted);
@@ -768,12 +874,208 @@
             background: #fef3c7;
         }
 
+        .summary-panel {
+            background:
+                linear-gradient(180deg, rgba(15, 118, 110, 0.05), rgba(15, 118, 110, 0.015)),
+                rgba(255, 255, 255, 0.97);
+        }
+
+        .control-panel,
+        .summary-panel {
+            display: grid;
+            gap: 14px;
+        }
+
+        .range-switch,
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .range-chip,
+        .preset-button {
+            min-height: 34px;
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 999px;
+            padding: 7px 12px;
+            color: var(--ink);
+            background: rgba(247, 250, 253, 0.96);
+            font-size: 0.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: none;
+        }
+
+        .range-chip.active {
+            color: #fff;
+            background: var(--brand);
+            border-color: var(--brand);
+        }
+
+        .preset-button {
+            color: var(--brand-strong);
+            background: rgba(240, 253, 250, 0.82);
+            border-color: rgba(15, 118, 110, 0.2);
+        }
+
+        .preset-button:active,
+        .range-chip:active {
+            transform: translateY(1px);
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .control-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .budget-preview {
+            display: grid;
+            gap: 12px;
+            border: 1px solid rgba(23, 32, 51, 0.08);
+            border-radius: 8px;
+            padding: 14px;
+            background: linear-gradient(180deg, rgba(15, 118, 110, 0.05), rgba(190, 18, 60, 0.03)), #f8fbfd;
+        }
+
+        .budget-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.84rem;
+            font-weight: 800;
+        }
+
+        .budget-row span {
+            color: var(--muted);
+        }
+
+        .budget-row strong {
+            color: var(--ink);
+        }
+
+        .budget-track {
+            height: 12px;
+        }
+
+        .budget-facts {
+            margin-top: 2px;
+        }
+
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .forecast-note {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
+        .recurring-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .recurring-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            border: 1px solid rgba(23, 32, 51, 0.09);
+            border-radius: 8px;
+            padding: 12px;
+            background: var(--panel);
+        }
+
+        .recurring-item strong {
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        .recurring-item p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .recurring-amount {
+            color: var(--brand-strong);
+            font-weight: 900;
+            text-align: right;
+        }
+
+        .transaction-body {
+            min-width: 0;
+        }
+
+        .transaction-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            border-radius: 999px;
+            padding: 4px 8px;
+            color: var(--brand-strong);
+            background: rgba(240, 253, 250, 0.88);
+            font-size: 0.73rem;
+            font-weight: 800;
+        }
+
+        .transaction-note {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .ledger-empty {
+            border: 1px solid rgba(23, 32, 51, 0.09);
+            border-radius: 8px;
+            padding: 14px;
+            background: var(--panel);
+        }
+
+        .ledger-empty strong {
+            display: block;
+            font-size: 0.92rem;
+        }
+
+        .ledger-empty p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
         @media (max-width: 980px) {
             .layout,
-            .hero,
             .grid-two,
-            .workflow-steps,
-            .onboarding-body {
+            .hero,
+            .onboarding-body,
+            .intro-grid,
+            .hero-stats,
+            .account-mini-grid,
+            .scenario-grid,
+            .forecast-grid,
+            .control-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -848,12 +1150,44 @@
 
             .summary-grid,
             .form-grid,
-            .demo-facts {
+            .demo-facts,
+            .intro-grid,
+            .hero-stats,
+            .account-mini-grid,
+            .scenario-grid,
+            .forecast-grid,
+            .control-grid {
                 grid-template-columns: 1fr;
             }
 
             .month-row {
                 grid-template-columns: 58px 1fr;
+            }
+
+            .transaction {
+                grid-template-columns: 1fr;
+            }
+
+            .transaction .amount {
+                text-align: left;
+            }
+
+            .control-actions,
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-actions .button,
+            .hero-actions .button,
+            .range-chip,
+            .preset-button {
+                width: 100%;
+            }
+
+            .budget-row {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>

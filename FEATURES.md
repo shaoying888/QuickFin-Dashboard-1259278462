@@ -1,72 +1,57 @@
 # QuickFin Feature Walkthrough
 
-This document is written for a quick project review. It explains what the application does, how to try the main flows, and where the F# implementation appears in the code.
+This document is for a quick review of the app. It focuses on what the app does, what the reviewer should click, and where the F# logic lives.
 
 ## What the App Does
 
-QuickFin is a browser-based personal finance dashboard for planning a monthly budget. A user can load a realistic demo month, add new transactions, adjust budget targets, and immediately see how the financial picture changes.
-
-The application focuses on four practical questions:
-
-- How much money is available after income and expenses?
-- Which categories are driving spending?
-- Is the monthly budget healthy or already over limit?
-- What does the transaction history suggest about recurring or unusually large expenses?
+QuickFin is a browser-based personal finance dashboard. It lets you load a demo month, add or remove transactions, adjust budget targets, compare review ranges, and inspect the computed results from several angles.
 
 ## Main User Flows
 
 ### 1. Start from a working month
 
-The `Load demo` action restores a sample data set with accounts, income, rent, groceries, travel, study expenses, health, entertainment, and subscription spending. This gives the reviewer a complete state to inspect without entering data first.
+Press `Load demo` to load sample income, housing, food, travel, health, subscriptions, and entertainment data.
 
-When the page opens for the first time, a short guide explains the same path and offers a one-click start into the demo data. The guide can be reopened from the top bar.
+### 2. Read the overview first
 
-### 2. Add a transaction
+The hero area and project snapshot explain the app goals, the reviewer flow, and the F# basis of the implementation.
 
-Use the `Add transaction` panel to enter a description, amount, date, transaction kind, category, and account. After pressing `Add transaction`, the dashboard updates the balance, totals, budget status, charts, insights, and ledger without a page reload.
+### 3. Switch the review range
 
-### 3. Test a budget scenario
+Use `Current month`, `Last 3 months`, and `All time` to change what the summary, charts, account view, forecast, and export summary use.
 
-Use `Budget controls` to edit the income target, expense limit, and savings goal. The budget status changes between healthy, watch, and over budget according to the F# calculation rules.
+### 4. Add or remove transactions
 
-### 4. Read the generated analysis
+Use the transaction form and presets to add entries quickly. The ledger also supports search and filtering, and each transaction can be removed.
 
-The dashboard includes category distribution, monthly trend, smart insights, and a generated summary panel. The generated summary is useful for checking that the finance engine is producing coherent text output from the same transaction model used by the UI.
+### 5. Test budget and planning ideas
+
+Use the budget controls, what-if scenario panel, and savings target panel to demonstrate live F# calculations beyond a basic dashboard.
 
 ## Where F# Is Used
 
-QuickFin is not a JavaScript-first app with a small F# helper. The main web application is authored in F# and compiled to browser JavaScript by WebSharper.
-
 | Area | F# evidence |
 |---|---|
-| Domain model | `fsharp-src/Domain.fs` defines transactions, accounts, budgets, categories, summaries, insights, and demo data as F# records and discriminated unions. |
-| Finance logic | `FinanceEngine` in `Domain.fs` calculates income, expenses, savings rate, budget usage, category breakdowns, monthly trends, largest expenses, recurring candidates, and summary text. |
-| Browser UI | `fsharp-src/Client.fs` renders the dashboard using WebSharper UI elements, `Var<DashboardModel>` state, `Doc.BindView`, and F# event handlers. |
-| Web app entry | `fsharp-src/Main.fs` defines the WebSharper HTML application and routes the generated page. |
-| Static deployment | `wsconfig.json`, `package.json`, and `esbuild.config.mjs` compile and bundle the F# WebSharper output into `fsharp-src/build/` for GitHub Pages. |
+| Domain model | `fsharp-src/Domain.fs` defines typed transactions, accounts, budgets, ranges, forecasts, scenarios, and savings plans. |
+| Finance logic | `FinanceEngine` in `Domain.fs` calculates summaries, range slices, recurring spend, account snapshots, scenario outputs, and goal plans. |
+| Browser UI | `fsharp-src/Client.fs` renders the WebSharper dashboard, manages state, and wires the forms and panels together. |
+| Static app entry | `fsharp-src/Main.fs` and `fsharp-src/Main.html` serve the compiled browser application. |
 
-## How to Review the F# Web App
+## How To Review
 
-1. Open the live GitHub Pages link from `README.md`.
-2. Press `Load demo`.
-3. Add a transaction such as `Bus pass`, `42.50`, `Expense`, `Travel`.
-4. Change the expense limit in `Budget controls`.
-5. Check that the summary cards, category chart, trend chart, smart insights, ledger, and generated summary all update together.
-6. Compare the behavior with `Domain.fs` and `Client.fs` to see the F# model, calculations, and browser UI implementation.
+1. Open the live demo.
+2. Load the demo data.
+3. Switch between the review ranges.
+4. Add a transaction.
+5. Change the budget.
+6. Try the scenario panel and savings target panel.
+7. Read the generated summary at the bottom.
 
 ## Build Output
-
-The release build command is:
 
 ```bash
 cd fsharp-src
 dotnet build QuickFinCore.fsproj -c Release
 ```
 
-The deployable static site is generated at:
-
-```text
-fsharp-src/build/
-```
-
-GitHub Actions runs the same build and deploys that generated directory to GitHub Pages.
+The deployable site is written to `fsharp-src/build/`.
