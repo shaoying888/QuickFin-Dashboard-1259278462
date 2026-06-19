@@ -49,6 +49,20 @@ module Client =
           Value: string
           Note: string }
 
+    type private AppPage =
+        | Overview
+        | Transactions
+        | Planning
+        | Notes
+
+    module private AppPage =
+        let displayName page =
+            match page with
+            | Overview -> "Overview"
+            | Transactions -> "Transactions"
+            | Planning -> "Planning"
+            | Notes -> "Notes"
+
     let private onboardingStorageKey = "quickfin.onboarding.seen"
 
     let private presets =
@@ -379,6 +393,15 @@ module Client =
             p [] [ text item.Note ]
         ]
 
+    let private pageTab (activePage: Var<AppPage>) page =
+        Doc.BindView (fun current ->
+            button [
+                attr.``class`` (if current = page then "nav-tab active" else "nav-tab")
+                attr.title (AppPage.displayName page)
+                on.click (fun _ _ -> activePage := page)
+            ] [ text (AppPage.displayName page) ]
+        ) activePage.View
+
     let private heroStats (state: Var<DashboardModel>) =
         Doc.BindView (fun model ->
             let summary = FinanceEngine.summarize model
@@ -402,6 +425,29 @@ module Client =
             div [ attr.``class`` "hero-stats" ] [
                 for item in stats do
                     renderStatCard item
+            ]
+        ) state.View
+
+    let private monthComparisonPanel (state: Var<DashboardModel>) =
+        Doc.BindView (fun model ->
+            let comparison = currentMonthComparison model.Transactions
+            div [ attr.``class`` "panel pad" ] [
+                div [ attr.``class`` "section-title" ] [
+                    h3 [] [ text "Month comparison" ]
+                    span [] [ text "Latest two months" ]
+                ]
+                match comparison with
+                | Some (current, previous, incomeDelta, expenseDelta, savingsDelta) ->
+                    div [ attr.``class`` "comparison-grid" ] [
+                        metric "Income delta" (formatDelta incomeDelta) (monthYearLabel current.Year current.Month + " vs " + monthYearLabel previous.Year previous.Month)
+                        metric "Expense delta" (formatDelta expenseDelta) "Spending change"
+                        metric "Savings delta" (formatDelta savingsDelta) "Cash flow movement"
+                    ]
+                | None ->
+                    div [ attr.``class`` "ledger-empty" ] [
+                        strong [] [ text "Need at least two months" ]
+                        p [] [ text "Load the demo month to see month-over-month movement." ]
+                    ]
             ]
         ) state.View
 
@@ -819,12 +865,6 @@ module Client =
                             attr.``class`` "button"
                             on.click (fun _ _ -> state := FinanceEngine.demoModel)
                         ] [ text "Load demo" ]
-                        button [
-                            attr.``class`` "button secondary"
-                            on.click (fun _ _ ->
-                                let cleared = { state.Value with Transactions = [] }
-                                state := cleared)
-                        ] [ text "Clear transactions" ]
                     ]
                 ]
                 div [ attr.``class`` "mini-column" ] [
@@ -931,7 +971,7 @@ module Client =
                                 filters.Search := ""
                                 filters.Category := "All categories"
                                 filters.Kind := "All kinds")
-                        ] [ text "Reset filters" ]
+                        ] [ text "Clear filters" ]
                         button [
                             attr.``class`` "button"
                             on.click (fun _ _ -> state := FinanceEngine.demoModel)
@@ -1103,9 +1143,6 @@ module Client =
             renderSummaryPanel state filters
             div [ attr.``class`` "grid-two" ] [
                 renderAccountPanel state filters
-                renderScenarioPanel state
-            ]
-            div [ attr.``class`` "grid-two" ] [
                 renderCategoryBreakdownPanel state filters
                 renderTimelinePanel state
             ]
@@ -1114,12 +1151,8 @@ module Client =
                 renderRecurringPanel state
             ]
             div [ attr.``class`` "grid-two" ] [
-                renderGoalPanel state
                 renderInsightsPanel state filters
-            ]
-            div [ attr.``class`` "grid-two" ] [
-                renderLedgerPanel state filters
-                renderCategoryBreakdownPanel state filters
+                renderGoalPanel state
             ]
         ]
 
@@ -1141,10 +1174,42 @@ module Client =
             ]
         ]
 
+    let private overviewPage (state: Var<DashboardModel>) (filters: FilterState) (activePage: Var<AppPage>) =
+        div [ attr.``class`` "page-stack" ] [
+            hero state
+            pageIntro state
+            analytics state filters
+            monthComparisonPanel state
+        ]
+
+    let private transactionsPage (state: Var<DashboardModel>) (filters: FilterState) =
+        div [ attr.``class`` "page-stack" ] [
+            controlPanel state filters
+            renderLedgerPanel state filters
+            reportPanel state filters
+        ]
+
+    let private planningPage (state: Var<DashboardModel>) =
+        div [ attr.``class`` "page-stack" ] [
+            transactionForm state
+            budgetPanel state
+            renderScenarioPanel state
+        ]
+
+    let private notesPage (state: Var<DashboardModel>) (filters: FilterState) =
+        div [ attr.``class`` "page-stack" ] [
+            workflowPanel()
+            featureGuide()
+            fsharpEvidence()
+            renderGoalPanel state
+            renderInsightsPanel state filters
+        ]
+
     let Main () =
         let state = Var.Create FinanceEngine.demoModel
         let filters = createFilters()
         let showOnboarding = Var.Create (not (onboardingSeen()))
+        let activePage = Var.Create Overview
 
         div [ attr.``class`` "app-shell" ] [
             header [ attr.``class`` "topbar" ] [
@@ -1157,10 +1222,11 @@ module Client =
                         ]
                     ]
                     div [ attr.``class`` "topbar-actions" ] [
-                        div [ attr.``class`` "badge-row" ] [
-                            span [ attr.``class`` "badge" ] [ text "Live analytics" ]
-                            span [ attr.``class`` "badge" ] [ text "Budget planner" ]
-                            span [ attr.``class`` "badge" ] [ text "GitHub Pages ready" ]
+                        div [ attr.``class`` "page-tabs" ] [
+                            pageTab activePage Overview
+                            pageTab activePage Transactions
+                            pageTab activePage Planning
+                            pageTab activePage Notes
                         ]
                         button [
                             attr.``class`` "guide-button"
@@ -1172,19 +1238,12 @@ module Client =
             ]
             onboardingGuide state showOnboarding
             div [ attr.``class`` "layout" ] [
-                div [] [
-                    hero state
-                    pageIntro state
-                    controlPanel state filters
-                    analytics state filters
-                ]
-                div [ attr.``class`` "side-stack" ] [
-                    workflowPanel()
-                    featureGuide()
-                    transactionForm state
-                    budgetPanel state
-                    fsharpEvidence()
-                    reportPanel state filters
-                ]
+                Doc.BindView (fun page ->
+                    match page with
+                    | Overview -> overviewPage state filters activePage
+                    | Transactions -> transactionsPage state filters
+                    | Planning -> planningPage state
+                    | Notes -> notesPage state filters
+                ) activePage.View
             ]
         ]

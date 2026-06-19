@@ -76,6 +76,13 @@
             gap: 12px;
         }
 
+        .page-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
         .brand {
             display: flex;
             align-items: center;
@@ -107,22 +114,23 @@
             font-size: 0.88rem;
         }
 
-        .badge-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 8px;
+        .nav-tab {
+            min-height: 38px;
+            border: 1px solid rgba(23, 32, 51, 0.1);
+            border-radius: 999px;
+            padding: 8px 12px;
+            color: var(--ink);
+            background: rgba(247, 250, 253, 0.96);
+            font-size: 0.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: none;
         }
 
-        .badge {
-            border: 1px solid rgba(15, 118, 110, 0.26);
-            border-radius: 999px;
-            padding: 7px 10px;
-            color: var(--brand-strong);
-            background: rgba(240, 253, 250, 0.78);
-            font-size: 0.8rem;
-            font-weight: 700;
-            white-space: nowrap;
+        .nav-tab.active {
+            color: #fff;
+            background: var(--brand);
+            border-color: var(--brand);
         }
 
         .guide-button,
@@ -145,8 +153,11 @@
             width: min(1240px, calc(100% - 24px));
             margin: 0 auto;
             padding: 24px 0 42px;
+            display: block;
+        }
+
+        .page-stack {
             display: grid;
-            grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.92fr);
             gap: 18px;
         }
 
@@ -322,7 +333,7 @@
         .hero {
             padding: 26px;
             display: grid;
-            grid-template-columns: minmax(0, 1.22fr) minmax(260px, 0.78fr);
+            grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.82fr);
             gap: 22px;
             align-items: stretch;
         }
@@ -582,12 +593,13 @@
         .summary-grid {
             margin-top: 18px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
         }
 
         .metric {
             padding: 16px;
+            min-height: 124px;
         }
 
         .metric small {
@@ -617,6 +629,12 @@
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 18px;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
         }
 
         .section-title {
@@ -1053,6 +1071,11 @@
             background: var(--panel);
         }
 
+        .hero .panel,
+        .page-stack > .panel {
+            min-width: 0;
+        }
+
         .ledger-empty strong {
             display: block;
             font-size: 0.92rem;
@@ -1066,12 +1089,12 @@
         }
 
         @media (max-width: 980px) {
-            .layout,
             .grid-two,
             .hero,
             .onboarding-body,
             .intro-grid,
             .hero-stats,
+            .comparison-grid,
             .account-mini-grid,
             .scenario-grid,
             .forecast-grid,
@@ -1081,6 +1104,14 @@
 
             .summary-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .page-tabs {
+                justify-content: flex-start;
             }
         }
 
@@ -1153,10 +1184,15 @@
             .demo-facts,
             .intro-grid,
             .hero-stats,
+            .comparison-grid,
             .account-mini-grid,
             .scenario-grid,
             .forecast-grid,
             .control-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1188,6 +1224,21 @@
             .budget-row {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .topbar-actions {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-tabs {
+                width: 100%;
+            }
+
+            .nav-tab,
+            .guide-button {
+                width: 100%;
             }
         }
     </style>
