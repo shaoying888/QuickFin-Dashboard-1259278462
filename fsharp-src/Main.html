@@ -154,12 +154,15 @@
             display: grid;
             place-items: center;
             padding: 18px;
+            overflow: auto;
             background: rgba(17, 24, 39, 0.34);
             backdrop-filter: blur(10px);
         }
 
         .onboarding-card {
-            width: min(920px, 100%);
+            width: min(920px, calc(100vw - 24px));
+            max-height: calc(100vh - 24px);
+            overflow: auto;
             padding: 22px;
             background: rgba(255, 255, 255, 0.97);
         }
@@ -169,6 +172,12 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 16px;
+        }
+
+        .onboarding-head > div,
+        .onboarding-path,
+        .demo-panel {
+            min-width: 0;
         }
 
         .onboarding-head h2 {
@@ -774,6 +783,16 @@
         }
 
         @media (max-width: 620px) {
+            .onboarding-overlay {
+                padding: 10px;
+            }
+
+            .onboarding-card {
+                width: 100%;
+                max-height: calc(100vh - 20px);
+                padding: 14px;
+            }
+
             .topbar-inner {
                 align-items: flex-start;
                 flex-direction: column;
@@ -801,11 +820,30 @@
             }
 
             .onboarding-card {
-                padding: 16px;
+                padding: 14px;
             }
 
             .onboarding-head {
                 flex-direction: column;
+            }
+
+            .onboarding-head h2 {
+                font-size: 1.28rem;
+                line-height: 1.08;
+                max-width: 20ch;
+            }
+
+            .onboarding-head p {
+                font-size: 0.9rem;
+            }
+
+            .onboarding-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .onboarding-actions .button {
+                width: 100%;
             }
 
             .summary-grid,
